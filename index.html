@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kh-claude – Claude Code on KeyHelp servers</title>
+<meta name="description" content="One command sets up Claude Code on a KeyHelp Debian server: runs as the site user, backs up files before changes, remembers each project.">
+<style>
+:root {
+  --bg: #e8ecef;
+  --panel: #f6f8f9;
+  --ink: #18222d;
+  --muted: #56636f;
+  --rule: #c5ced6;
+  --accent: #0b6e7f;
+  --signal: #e8b931;
+  --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #10171e;
+    --panel: #18222c;
+    --ink: #dce3ea;
+    --muted: #93a0ad;
+    --rule: #2a3640;
+    --accent: #5cc3d3;
+    --signal: #e8b931;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); }
+body {
+  margin: 0;
+  font: 17px/1.6 var(--sans);
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--signal); outline-offset: 3px; }
+code, pre { font-family: var(--mono); font-size: 0.9em; }
+:not(pre) > code { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 0.05em 0.35em; }
+
+.page { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.hero { padding: 72px 0 56px; }
+.name { margin: 0 0 28px; font-weight: 600; color: var(--muted); font-size: 1rem; }
+h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 5.6vw, 4.2rem);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 750;
+  max-width: 16ch;
+}
+.lead { margin: 22px 0 40px; font-size: 1.2rem; color: var(--muted); max-width: 58ch; }
+
+.cmd {
+  display: flex;
+  align-items: stretch;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 6px solid var(--accent);
+  border-radius: 2px 8px 8px 2px;
+}
+.cmd pre {
+  margin: 0;
+  padding: 22px 24px;
+  flex: 1;
+  overflow-x: auto;
+  font-size: clamp(0.85rem, 1.9vw, 1.12rem);
+  line-height: 1.5;
+}
+.cmd .prompt { color: var(--muted); user-select: none; }
+.cmd button {
+  flex: none;
+  min-width: 96px;
+  border: 0;
+  border-left: 1px solid var(--rule);
+  background: transparent;
+  color: var(--accent);
+  font: 600 0.95rem var(--sans);
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+}
+.cmd button:hover { background: var(--bg); }
+.cmd button.done { background: var(--signal); color: #18222d; }
+.hint { margin: 12px 0 0; color: var(--muted); font-size: 0.95rem; }
+
+/* Manual-style sections: name in the gutter, content beside it */
+section {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 32px;
+  padding: 40px 0;
+  border-top: 1px solid var(--rule);
+}
+h2 { margin: 0; font-size: 1.15rem; letter-spacing: -0.01em; line-height: 1.4; }
+.body > :first-child { margin-top: 0; }
+.body > :last-child { margin-bottom: 0; }
+.body p, .body li { max-width: 66ch; }
+
+ol.steps { margin: 0; padding-left: 1.4em; }
+ol.steps li { margin-bottom: 14px; padding-left: 4px; }
+ol.steps li::marker { font-weight: 700; color: var(--accent); }
+
+dl.parts { margin: 0; }
+dl.parts div { padding: 14px 0; border-bottom: 1px dashed var(--rule); }
+dl.parts div:first-child { padding-top: 0; }
+dl.parts div:last-child { border-bottom: 0; padding-bottom: 0; }
+dt { font-weight: 650; }
+dd { margin: 2px 0 0; color: var(--muted); max-width: 66ch; }
+
+pre.block {
+  margin: 0;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 18px 20px;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+.c { color: var(--muted); }
+
+table { border-collapse: collapse; width: 100%; max-width: 680px; }
+td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { white-space: nowrap; width: 1%; padding-right: 28px; }
+
+.warn {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border-left: 4px solid var(--signal);
+  background: var(--panel);
+  max-width: 66ch;
+}
+
+footer { padding: 36px 0 56px; border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.92rem; }
+footer p { margin: 0 0 6px; max-width: 80ch; }
+
+@media (max-width: 760px) {
+  .hero { padding: 44px 0 40px; }
+  section { grid-template-columns: 1fr; gap: 14px; padding: 32px 0; }
+  .cmd { flex-direction: column; border-radius: 2px 8px 8px 2px; }
+  .cmd pre { white-space: pre-wrap; word-break: break-all; }
+  .cmd button { border-left: 0; border-top: 1px solid var(--rule); padding: 12px; border-radius: 0 0 8px 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cmd button { transition: background-color .15s ease; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="hero">
+  <p class="name">kh-claude</p>
+  <h1>Claude Code on KeyHelp servers</h1>
+  <p class="lead">One command installs Claude Code on a KeyHelp Debian server. It runs as your site user, backs up every file before changing it, and remembers each project between sessions.</p>
+
+  <div class="cmd">
+    <pre id="install"><span class="prompt"># </span>curl -fsSL https://nicvex.github.io/kh-claude/install.sh | bash -s user</pre>
+    <button type="button" id="copy" aria-label="Copy install command">Copy</button>
+  </div>
+  <p class="hint">Run as root. Replace <code>user</code> with your KeyHelp username.</p>
+</header>
+
+<section>
+  <h2>Get started</h2>
+  <div class="body">
+    <ol class="steps">
+      <li>Run the install command above on the server.</li>
+      <li>Start Claude: <code>claude</code> for an overview of all projects, or <code>claude shop.de</code> for one project. Run <code>hash -r</code> first if you installed in the same shell.</li>
+      <li>On the first start, open the login link in your browser and paste the code back. This needs a Claude Pro, Max, Team, Enterprise or Console account.</li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <h2>What it sets up</h2>
+  <div class="body">
+    <dl class="parts">
+      <div><dt>Claude Code</dt><dd>Installed from Anthropic's signed apt repository. The key fingerprint is checked before anything is installed.</dd></div>
+      <div><dt>Never as root</dt><dd>Typing <code>claude</code> as root starts it as the KeyHelp user, inside tmux. Lost your SSH connection? Run <code>claude</code> again and you're back in the same session.</dd></div>
+      <div><dt>Server context</dt><dd><code>www/CLAUDE.md</code> tells Claude it's on a KeyHelp server, that every folder is a separate project, and which settings belong in the panel.</dd></div>
+      <div><dt>Backups outside your projects</dt><dd>Before a file is changed or deleted, the original is copied to <code>claude-backups/</code>. New files are listed so you know what to remove when rolling back.</dd></div>
+      <div><dt>Project memory</dt><dd>Each project gets a <code>MEMORY.md</code> with structure, notes, open tasks and a changelog. It's loaded when a session starts and updated after each step.</dd></div>
+      <div><dt>Root-owned files</dt><dd><code>kh-fixowner</code> gives files inside <code>www/</code> back to the user. Claude has to ask you every time.</dd></div>
+      <div><dt>Databases</dt><dd>Claude reads with each project's own credentials. Before any write, it makes a dump and asks.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section>
+  <h2>Folder layout</h2>
+  <div class="body">
+<pre class="block">/home/users/user/www/
+├── CLAUDE.md
+├── shop.de/                      <span class="c">your project, kept clean</span>
+└── claude-backups/
+    └── shop.de/
+        ├── MEMORY.md             <span class="c">project memory</span>
+        ├── 2026-11-18_14-02_abcdef12/
+        │   ├── files/            <span class="c">originals before the first change</span>
+        │   ├── MANIFEST.txt      <span class="c">every action with time</span>
+        │   └── NEW.txt           <span class="c">files Claude created</span>
+        └── db/                   <span class="c">dumps before database writes</span></pre>
+  </div>
+</section>
+
+<section>
+  <h2>Everyday commands</h2>
+  <div class="body">
+    <table>
+      <tr><td><code>claude</code></td><td>Start, or reattach to the running session</td></tr>
+      <tr><td><code>claude shop.de</code></td><td>Start in one project</td></tr>
+      <tr><td><code>Ctrl+b</code>, <code>d</code></td><td>Detach. Claude keeps running.</td></tr>
+      <tr><td><code>tmux ls</code></td><td>List running sessions</td></tr>
+      <tr><td><code>/resume</code></td><td>Reopen an earlier conversation</td></tr>
+      <tr><td><code>kh-claude-update</code></td><td>Show what changed and install a new version</td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Updates</h2>
+  <div class="body">
+    <p>When you start <code>claude</code>, it checks once a day for a new kh-claude version and tells you. <code>kh-claude-update</code> shows the exact changes and asks before installing. Claude Code itself is upgraded daily from Anthropic's signed repository.</p>
+    <p>Settings are in <code>/etc/kh-claude.conf</code>:</p>
+<pre class="block">KH_USER="user"
+CLAUDE_AUTO_UPGRADE="yes"   <span class="c"># daily Claude Code upgrade</span>
+AUTO_UPDATE="no"            <span class="c"># "yes" installs kh-claude updates automatically</span></pre>
+    <p class="warn">With <code>AUTO_UPDATE="yes"</code>, your servers run whatever is published here as root, every day. Leave it off unless you control this repository.</p>
+    <p>Want a fixed version? Install from a release tag instead:<br><code>curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.0/install.sh | bash -s user</code></p>
+  </div>
+</section>
+
+<section>
+  <h2>Security model</h2>
+  <div class="body">
+    <p>Claude runs as the KeyHelp user, so it can't reach other users, KeyHelp itself or system files. The only root action available is <code>kh-fixowner</code>, limited to <code>www/</code>. <code>sudo</code>, <code>mysql</code> and <code>mysqldump</code> always ask for permission. There is no KeyHelp API access; the panel stays yours.</p>
+    <p>Read <a href="https://github.com/nicvex/kh-claude/blob/main/install.sh">install.sh</a> before you run it. It's one file.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Uninstall</h2>
+  <div class="body">
+<pre class="block">rm -f /usr/local/sbin/claude /usr/local/bin/claude-kh /usr/local/bin/kh-backup \
+      /usr/local/bin/kh-memory /usr/local/bin/kh-claude-update /usr/local/sbin/kh-fixowner \
+      /etc/sudoers.d/kh-fixowner /etc/cron.daily/kh-claude /etc/kh-claude.conf
+rm -rf /usr/local/share/kh-claude
+apt remove claude-code        <span class="c"># optional</span></pre>
+    <p>Backups, memory files and <code>www/CLAUDE.md</code> stay where they are.</p>
+  </div>
+</section>
+
+<footer>
+  <p><a href="https://github.com/nicvex/kh-claude">Source on GitHub</a>, MIT license. <a href="CHANGELOG.md">Changelog</a>.</p>
+  <p>Unofficial community project. Not affiliated with or endorsed by Anthropic or Keyweb AG. Claude is a trademark of Anthropic, KeyHelp a trademark of Keyweb AG.</p>
+</footer>
+
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('copy');
+  var text = 'curl -fsSL https://nicvex.github.io/kh-claude/install.sh | bash -s user';
+  function done() {
+    btn.textContent = 'Copied';
+    btn.classList.add('done');
+    setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1800);
+  }
+  btn.addEventListener('click', function () {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); done(); } finally { document.body.removeChild(t); }
+    }
+  });
+})();
+</script>
+</body>
+</html>
