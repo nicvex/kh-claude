@@ -226,13 +226,13 @@ footer p { margin: 0 0 6px; max-width: 80ch; }
 <section>
   <h2>Updates</h2>
   <div class="body">
-    <p>When you start <code>claude</code>, it checks once a day for a new kh-claude version and tells you. <code>kh-claude-update</code> shows the exact changes and asks before installing. Claude Code itself is upgraded daily from Anthropic's signed repository.</p>
+    <p>Every time you start <code>claude</code>, it checks GitHub for a new kh-claude version and tells you. <code>kh-claude-update</code> shows the exact changes and asks before installing. Claude Code itself is upgraded daily from Anthropic's signed repository.</p>
     <p>Settings are in <code>/etc/kh-claude.conf</code>:</p>
 <pre class="block">KH_USER="user"
 CLAUDE_AUTO_UPGRADE="yes"   <span class="c"># daily Claude Code upgrade</span>
 AUTO_UPDATE="no"            <span class="c"># "yes" installs kh-claude updates automatically</span></pre>
     <p class="warn">With <code>AUTO_UPDATE="yes"</code>, your servers run whatever is published here as root, every day. Leave it off unless you control this repository.</p>
-    <p>Want a fixed version? Install from a release tag instead:<br><code>curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.0/install.sh | bash -s user</code></p>
+    <p>Want a fixed version? Install from a release tag instead:<br><code>curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.1/install.sh | bash -s user</code></p>
   </div>
 </section>
 

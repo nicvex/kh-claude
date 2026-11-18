@@ -5,8 +5,9 @@
 # Usage: bash install.sh [keyhelp-user]   (default: saved user, else "user")
 set -euo pipefail
 
-KHC_VERSION="1.0.0"
+KHC_VERSION="1.0.1"
 KHC_BASE="https://nicvex.github.io/kh-claude"
+KHC_RAW="https://raw.githubusercontent.com/nicvex/kh-claude"
 KHC_CONF="/etc/kh-claude.conf"
 KHC_SHARE="/usr/local/share/kh-claude"
 
@@ -107,7 +108,7 @@ DIR="/home/users/$U/www${1:+/$1}"
 # Always run inside tmux: reattach if the session exists, else create it
 if [ -z "${TMUX:-}" ]; then
   if [ "$(id -u)" -eq 0 ] && [ -x /usr/local/bin/kh-claude-update ]; then
-    MSG="$(timeout 8 /usr/local/bin/kh-claude-update --check 2>/dev/null || true)"
+    MSG="$(timeout 6 /usr/local/bin/kh-claude-update --check 2>/dev/null || true)"
     [ -n "$MSG" ] && { echo "$MSG"; sleep 3; }
   fi
   S="claude${1:+-${1//[.:]/_}}"
@@ -307,33 +308,34 @@ echo "==> Installing /usr/local/bin/kh-claude-update"
 cat > /usr/local/bin/kh-claude-update <<'EOF'
 #!/bin/bash
 # kh-claude-update            check, show the changes, ask, install
-# kh-claude-update --check    print a notice if a newer version exists (checked once a day)
+# kh-claude-update --check    print a notice if GitHub has a newer version (runs on every 'claude' start)
 # kh-claude-update --yes      install without asking (daily cron when AUTO_UPDATE="yes")
 set -uo pipefail
 BASE="__KHC_BASE__"
+RAW="__KHC_RAW__"
 SHARE="/usr/local/share/kh-claude"
 KH_USER="user"; [ -f /etc/kh-claude.conf ] && . /etc/kh-claude.conf
 LOCAL="$(cat "$SHARE/VERSION" 2>/dev/null || echo 0)"
-remote_version() { curl -fsS --max-time 5 "$BASE/VERSION" | tr -d '[:space:]'; }
+remote_version() {   # $1 = timeout; GitHub main branch first, Pages as fallback
+  local v
+  v="$({ curl -fsS --max-time "${1:-5}" "$RAW/main/VERSION" \
+      || curl -fsS --max-time "${1:-5}" "$BASE/VERSION"; } 2>/dev/null | tr -d '[:space:]')"
+  [[ "$v" =~ ^[0-9]+(\.[0-9]+)*$ ]] && echo "$v"
+}
 newer() { [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -n1)" = "$1" ]; }
 
 if [ "${1:-}" = "--check" ]; then
-  C="$SHARE/.last-check"
-  if [ -z "$(find "$C" -mmin -1440 2>/dev/null)" ]; then
-    remote_version > "$C.tmp" 2>/dev/null && mv "$C.tmp" "$C" || { rm -f "$C.tmp"; : > "$C"; }
-  fi
-  R="$(cat "$C" 2>/dev/null || true)"
-  if [ -n "$R" ] && newer "$R" "$LOCAL"; then
-    echo "kh-claude update available: $LOCAL -> $R   (run: kh-claude-update)"
-  fi
+  R="$(remote_version 4)" || exit 0
+  newer "$R" "$LOCAL" && echo "kh-claude update available: $LOCAL -> $R   (run: kh-claude-update)"
   exit 0
 fi
 
 [ "$(id -u)" -eq 0 ] || { echo "Run as root"; exit 1; }
-R="$(remote_version)" || { echo "Could not reach $BASE"; exit 1; }
+R="$(remote_version)" || { echo "Could not reach GitHub"; exit 1; }
 newer "$R" "$LOCAL" || { echo "kh-claude is up to date ($LOCAL)."; exit 0; }
 TMP="$(mktemp)"; trap 'rm -f "$TMP"' EXIT
-curl -fsSL --max-time 30 "$BASE/install.sh" -o "$TMP" || { echo "Download failed"; exit 1; }
+curl -fsSL --max-time 30 "$RAW/v$R/install.sh" -o "$TMP" \
+  || curl -fsSL --max-time 30 "$RAW/main/install.sh" -o "$TMP" || { echo "Download failed"; exit 1; }
 grep -q "^KHC_VERSION=\"$R\"" "$TMP" || { echo "Downloaded installer is not version $R, aborting"; exit 1; }
 echo "Update $LOCAL -> $R   Changelog: $BASE/CHANGELOG.md"
 if [ "${1:-}" != "--yes" ]; then
@@ -344,7 +346,7 @@ if [ "${1:-}" != "--yes" ]; then
 fi
 bash "$TMP" "$KH_USER"
 EOF
-sed -i "s#__KHC_BASE__#$KHC_BASE#" /usr/local/bin/kh-claude-update
+sed -i -e "s#__KHC_BASE__#$KHC_BASE#" -e "s#__KHC_RAW__#$KHC_RAW#" /usr/local/bin/kh-claude-update
 chmod 0755 /usr/local/bin/kh-claude-update
 
 echo "==> Daily job /etc/cron.daily/kh-claude"

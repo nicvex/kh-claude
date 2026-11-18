@@ -27,7 +27,7 @@ On the first start, log in once (open the URL it shows in your browser and paste
 Prefer a fixed version? Use a release tag instead of the latest:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.0/install.sh | bash -s user
+curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.1/install.sh | bash -s user
 ```
 
 ## What it sets up
@@ -73,7 +73,7 @@ curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.0/install.sh 
 
 ## Updates
 
-`claude` checks once a day whether a new kh-claude version exists and tells you. `kh-claude-update` shows the exact diff and asks before installing.
+Every time you start `claude`, it checks GitHub for a new kh-claude version and tells you (takes at most a few seconds; if GitHub is unreachable, Claude starts normally). `kh-claude-update` shows the exact diff and asks before installing.
 
 Settings live in `/etc/kh-claude.conf`:
 
