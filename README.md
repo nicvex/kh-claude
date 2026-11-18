@@ -1,6 +1,6 @@
 # kh-claude
 
-Run [Claude Code](https://code.claude.com) on Debian servers managed with [KeyHelp](https://www.keyhelp.de), without ever running it as root.
+Run [Claude Code](https://code.claude.com) on Debian and Ubuntu servers managed with [KeyHelp](https://www.keyhelp.de), without ever running it as root.
 
 Website: **https://nicvex.github.io/kh-claude/**
 
@@ -27,7 +27,7 @@ On the first start, log in once (open the URL it shows in your browser and paste
 Prefer a fixed version? Use a release tag instead of the latest:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.1/install.sh | bash -s user
+curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.2/install.sh | bash -s user
 ```
 
 ## What it sets up

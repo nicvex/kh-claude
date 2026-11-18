@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>kh-claude – Claude Code on KeyHelp servers</title>
-<meta name="description" content="One command sets up Claude Code on a KeyHelp Debian server: runs as the site user, backs up files before changes, remembers each project.">
+<meta name="description" content="One command sets up Claude Code on a KeyHelp Debian or Ubuntu server: runs as the site user, backs up files before changes, remembers each project.">
 <style>
 :root {
   --bg: #e8ecef;
@@ -157,7 +157,7 @@ footer p { margin: 0 0 6px; max-width: 80ch; }
 <header class="hero">
   <p class="name">kh-claude</p>
   <h1>Claude Code on KeyHelp servers</h1>
-  <p class="lead">One command installs Claude Code on a KeyHelp Debian server. It runs as your site user, backs up every file before changing it, and remembers each project between sessions.</p>
+  <p class="lead">One command installs Claude Code on a KeyHelp Debian or Ubuntu server. It runs as your site user, backs up every file before changing it, and remembers each project between sessions.</p>
 
   <div class="cmd">
     <pre id="install"><span class="prompt"># </span>curl -fsSL https://nicvex.github.io/kh-claude/install.sh | bash -s user</pre>
@@ -232,7 +232,7 @@ footer p { margin: 0 0 6px; max-width: 80ch; }
 CLAUDE_AUTO_UPGRADE="yes"   <span class="c"># daily Claude Code upgrade</span>
 AUTO_UPDATE="no"            <span class="c"># "yes" installs kh-claude updates automatically</span></pre>
     <p class="warn">With <code>AUTO_UPDATE="yes"</code>, your servers run whatever is published here as root, every day. Leave it off unless you control this repository.</p>
-    <p>Want a fixed version? Install from a release tag instead:<br><code>curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.1/install.sh | bash -s user</code></p>
+    <p>Want a fixed version? Install from a release tag instead:<br><code>curl -fsSL https://raw.githubusercontent.com/nicvex/kh-claude/v1.0.2/install.sh | bash -s user</code></p>
   </div>
 </section>
 

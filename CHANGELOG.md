@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2 – 2026-11-18
+
+- Ubuntu support: `www/CLAUDE.md` names the actual OS (from `/etc/os-release`) instead of always "Debian"
+- Installer stops early with a clear message on systems without apt
+- README and website: Debian and Ubuntu
+
 ## 1.0.1 – 2026-11-18
 
 - Update check now runs on every `claude` start (was once a day) and asks GitHub directly (Pages as fallback)

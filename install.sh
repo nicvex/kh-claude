@@ -1,11 +1,11 @@
 #!/bin/bash
-# kh-claude – Claude Code on KeyHelp Debian servers (unofficial community project)
+# kh-claude – Claude Code on KeyHelp Debian and Ubuntu servers (unofficial community project)
 # https://github.com/nicvex/kh-claude
 # Run as root. Safe to run again (idempotent).
 # Usage: bash install.sh [keyhelp-user]   (default: saved user, else "user")
 set -euo pipefail
 
-KHC_VERSION="1.0.1"
+KHC_VERSION="1.0.2"
 KHC_BASE="https://nicvex.github.io/kh-claude"
 KHC_RAW="https://raw.githubusercontent.com/nicvex/kh-claude"
 KHC_CONF="/etc/kh-claude.conf"
@@ -21,6 +21,9 @@ FPR="31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE"
 [ "$(id -u)" -eq 0 ] || { echo "Run as root"; exit 1; }
 id "$KH_USER" >/dev/null 2>&1 || { echo "User '$KH_USER' not found"; exit 1; }
 [ -d "$WWW" ] || { echo "$WWW not found"; exit 1; }
+command -v apt-get >/dev/null || { echo "apt-get not found: kh-claude supports Debian and Ubuntu only"; exit 1; }
+OS_NAME="$( . /etc/os-release 2>/dev/null; echo "${PRETTY_NAME:-Linux}" )"
+echo "==> Detected $OS_NAME"
 
 echo "==> Installing Claude Code (apt)"
 apt-get update -q
@@ -40,7 +43,7 @@ echo "==> Writing $WWW/CLAUDE.md"
 cat > "$WWW/CLAUDE.md" <<EOF
 # Server context
 
-This is a Debian server ($(hostname -f)) administrated with **KeyHelp** (hosting control panel).
+This is a $OS_NAME server ($(hostname -f)) administrated with **KeyHelp** (hosting control panel).
 You are running as the unprivileged KeyHelp user \`$KH_USER\`, not root. The only allowed sudo command is \`kh-fixowner\` (see below).
 
 ## Layout
